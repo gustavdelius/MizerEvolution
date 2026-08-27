@@ -10,13 +10,29 @@
 #'
 #' @import mizer dplyr ggplot2
 #' @importFrom reshape2 melt
-#' @importFrom stats pnorm runif time
+#' @importFrom stats pnorm rlnorm runif time
 #' @importFrom methods is
 #' @importFrom grDevices colorRampPalette
 #' @importFrom plyr aaply
+"_PACKAGE"
+
 #' @export
 reshape2::melt
 
-"_PACKAGE"
-
 globalVariables(c("inter","value","sp","phen","Species","species","xint","grp","lineage","size","critical"))
+
+.onLoad <- function(libname, pkgname) {
+  mizer::registerExtension(
+    pkgname,
+    requirement = "gustavdelius/MizerEvolution"
+  )
+}
+
+record_mizer_evolution <- function(params) {
+  version <- if ("mizerEvolution" %in% names(params@extensions)) {
+    NULL
+  } else {
+    as.character(utils::packageVersion("mizerEvolution"))
+  }
+  mizer::recordExtension(params, "mizerEvolution", version = version)
+}

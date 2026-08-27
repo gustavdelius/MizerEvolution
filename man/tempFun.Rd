@@ -8,6 +8,20 @@ a deactivation portion with Anna Gardmark's equation once it's published}
 \usage{
 tempFun(w, temperature, t_ref, Ea, c_a)
 }
+\arguments{
+\item{w}{Body weights.}
+
+\item{temperature}{Environmental temperature in degrees Celsius.}
+
+\item{t_ref}{Reference temperature in degrees Celsius.}
+
+\item{Ea}{Activation energy.}
+
+\item{c_a}{Allometric temperature coefficient.}
+}
+\value{
+A matrix of temperature scaling factors.
+}
 \description{
 tempFun is a function that takes temperature parameters (temperature, t_ref, t_d) and physiological parameters (w, Ea, c_a)
 and returns a scalar based on the Padfield (2016) temperature performance equation. This will be upgraded in the future with

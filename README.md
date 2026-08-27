@@ -62,6 +62,7 @@ part of a same species. Generating phenotypes and removing the less
 abundant proxy natural selection and trait adaptation.
 
 ``` r
+set.seed(1)
 params <- evoParams(no_sp = 5 )
 ```
 
@@ -195,7 +196,8 @@ The trait value of the phenotypes can be displayed per phenotypes as a
 continuous gradient, only available when only one species is selected
 
 ``` r
-plotDynamics(sim, species = 2, trait = sim@params@species_params$beta)
+plotDynamics(sim, species = 2,
+             trait = species_params(finalParams(sim))$beta)
 ```
 
 ![](man/figures/plotDynamics4-1.png)<!-- -->
@@ -292,9 +294,10 @@ needs to give a data frame to the mutation argument instead of a
 numeric.
 
 ``` r
+set.seed(2)
 params<- evoParams()
 
-alien <- params@species_params[4:5,] # copy existing data frame
+alien <- species_params(params)[4:5,] # copy existing data frame
 alien$h <- 50 # change some parameters
 alien$alpha <- .6
 alien$time <- c(50,75) # when are the invasive species coming in?
@@ -426,6 +429,7 @@ calculated to create a size spectrum. Default is set to `NULL`, making
 it `kappa/1000`.
 
 ``` r
+set.seed(3)
 params <- evoParams()
 
 sim <- evoProject(params = params, mutation = 0, alien = 3, alien_init_n = NULL)
@@ -648,6 +652,7 @@ The argument `updateParams` in `evoParams` updates an existing
 `mizerParams` object into a `mizerEvolution` compatible object.
 
 ``` r
+set.seed(4)
 newP <- evoParams(updateParams = NS_params)
 
 sim <- evoProject(params = newP, mutation = 1, trait = "beta")
@@ -679,6 +684,7 @@ plotBiomass(old_sim)
 Invasions work too
 
 ``` r
+set.seed(5)
 sim_inv <- evoProject(params = newP, mutation = 0, alien =2)
 
 plotDynamics(sim_inv)

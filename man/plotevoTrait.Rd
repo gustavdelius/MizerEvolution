@@ -13,35 +13,35 @@ plotevoTrait(
 )
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim-class]{MizerSim}}
 
 \item{SpIdx}{Display a subset of species}
 
+\item{Normalisation}{A boolean controlling whether abundances are normalised.}
+
 \item{returnData}{A boolean value that controls the output. Either a dataframe
 ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE}
+
+\item{traitID}{Optional trait identifier used for the colour scale.}
 }
 \value{
 A plot
 }
 \description{
-
-}
-\examples{
-\donttest{
-}
+Plot trait evolution through time
 }
 \seealso{
-\link{plotting_functions},
+\link[mizer:plotting_functions]{plotting_functions},
 
-Other plotting functions: 
-\code{\link{plotDynamics}()},
-\code{\link{plotPredMort}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotSpawn}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()}
+Other plotting functions:
+\code{\link[=plotDynamics]{plotDynamics()}},
+\code{\link[=plotPredMort]{plotPredMort()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotSpawn]{plotSpawn()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}}
 }
 \concept{plotting functions}

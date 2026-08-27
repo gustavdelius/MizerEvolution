@@ -69,12 +69,17 @@
 #' @param updateParams ...
 #' @param ea_int ...
 #' @param ca_int ...
+#' @param ed_int ...
+#' @param cd_int ...
+#' @param t_ref ...
+#' @param t_d ...
+#' @param info_level Controls the amount of information reported by mizer.
 #' @export
 #' @return An object of type `MizerParams`
 #' @family functions for setting up models
 #' @examples
 #' \dontrun{
-#' params <- newTraitParams()
+#' params <- evoParams(info_level = 0)
 #' sim <- project(params, t_max = 5, effort = 0)
 #' plotSpectra(sim)
 #' }
@@ -117,94 +122,80 @@ evoParams <- function(no_sp = 11,
                       ed_int = 0,
                       cd_int = 0,
                       t_ref = 0,
-                      t_d = 0
+                      t_d = 0,
+                      info_level = mizer::default_info_level()
 ) {
+  mizer::with_info_level(info_level = info_level, {
+    if (is.null(updateParams)) {
+      params <- newTraitParams(
+        no_sp = no_sp,
+        min_w_max = min_w_inf,
+        max_w_max = max_w_inf,
+        min_w = min_w,
+        max_w = max_w,
+        eta = eta,
+        min_w_mat = min_w_mat,
+        no_w = no_w,
+        min_w_pp = min_w_pp,
+        w_pp_cutoff = w_pp_cutoff,
+        n = n,
+        p = p,
+        lambda = lambda,
+        r_pp = r_pp,
+        kappa = kappa,
+        alpha = alpha,
+        h = h,
+        beta = beta,
+        sigma = sigma,
+        f0 = f0,
+        fc = fc,
+        ks = ks,
+        gamma = gamma,
+        ext_mort_prop = ext_mort_prop,
+        reproduction_level = 1 / R_factor,
+        gear_names = gear_names,
+        knife_edge_size = knife_edge_size,
+        egg_size_scaling = egg_size_scaling,
+        resource_scaling = resource_scaling,
+        perfect_scaling = perfect_scaling,
+        info_level = info_level
+      )
+      species_names <- nameGenerator(no_sp)
+    } else {
+      params <- updateParams
+      old_species <- as.character(species_params(params)$species)
+      new_species <- as.character(seq_along(old_species))
+      if (!identical(old_species, new_species)) {
+        params <- renameSpecies(
+          params,
+          stats::setNames(new_species, old_species)
+        )
+      }
+      species_names <- old_species
+    }
 
+    sp <- species_params(params)
+    sp$lineage <- factor(seq_len(nrow(sp)))
+    sp$name <- species_names
+    if ("zeta" %in% names(sp) && !"mutation_sd" %in% names(sp)) {
+      sp$mutation_sd <- sp$zeta
+    } else {
+      sp$mutation_sd <- zeta
+    }
+    sp$zeta <- NULL
+    sp$pop <- 1
+    sp$ext <- FALSE
+    sp$ea_int <- ea_int
+    sp$ca_int <- ca_int
+    sp$ed_int <- ed_int
+    sp$cd_int <- cd_int
+    sp$t_d <- t_d
+    sp$t_ref <- t_ref
+    species_params(params) <- sp
 
-  if(is.null(updateParams))
-  {
-    params <- newTraitParams(
-      no_sp = no_sp,
-      min_w_inf = min_w_inf,
-      max_w_inf = max_w_inf,
-      min_w = min_w,
-      max_w = max_w,
-      eta = eta,
-      min_w_mat = min_w_mat,
-      no_w = no_w,
-      min_w_pp = min_w_pp,
-      w_pp_cutoff = w_pp_cutoff,
-      n = n,
-      p = p,
-      lambda = lambda,
-      r_pp = r_pp,
-      kappa = kappa,
-      alpha = alpha,
-      h = h,
-      beta = beta,
-      sigma = sigma,
-      f0 = f0,
-      fc = fc,
-      ks = ks,
-      gamma = gamma,
-      ext_mort_prop = ext_mort_prop,
-      R_factor = R_factor,
-      gear_names = gear_names,
-      knife_edge_size = knife_edge_size,
-      egg_size_scaling = egg_size_scaling,
-      resource_scaling = resource_scaling,
-      perfect_scaling = perfect_scaling)
-
-    params@species_params$lineage <- as.factor(1:no_sp) # parameter to remember the origin species of the phenotypes
-    params@species_params$name <- nameGenerator(no_sp)
-    # temperature parameters
-    # params@species_params$ea_int <- ea_int
-    # params@species_params$ca_int <- ca_int
-    # params@species_params$ed_int <- ed_int
-    # params@species_params$cd_int <- cd_int
-    # params@species_params$t_d <- t_d
-    # params@species_params$t_ref <- t_ref
-
-  } else {
-    # if the species column has characters instead of numeric it becomes annoying
-    new_sp_params <- updateParams@species_params
-    speciesName <- new_sp_params$species
-    new_sp_params$species <- as.factor(1:dim(new_sp_params)[1])
-
-    params <- newMultispeciesParams(new_sp_params, interaction = updateParams@interaction, min_w_pp = updateParams@w_full[1])
-    params <- setResource(params, r_pp = updateParams@resource_params$r_pp,
-                          kappa = updateParams@resource_params$kappa,
-                          lambda = updateParams@resource_params$lambda,
-                          n = updateParams@resource_params$n,
-                          w_pp_cutoff = updateParams@resource_params$w_pp_cutoff)
-    # setPredKernel(params, pred_kernel = getPredKernel(updateParams))
-
-    params@gear_params$species <- as.factor(params@gear_params$species) # for some reason the function above gives species as char
-    params@species_params$lineage <- as.factor(1:dim(params@species_params)[1]) # parameter to remember the origin species of the phenotypes
-    params@species_params$name <- speciesName
-
-
-    #   if(!is.null(interactionMatrix))
-    #   {
-    #     dimnames(interactionMatrix) <- list(as.factor(1:dim(inter)[1]),as.factor(1:dim(inter)[2]))
-    #     params <- setInteraction(params, interaction = interactionMatrix)
-    #   }
-  }
-
-  params@species_params$zeta <- zeta # amplitude of lognorm distribution around trait when generating new phenotype
-  params@species_params$pop <- 1 # when the phenotype entered the simulation
-  params@species_params$ext <- F # when the phenotype left the simulation
-  params <- setReproduction(params, RDD = RDD)
-
-  # temperature parameters
-  params@species_params$ea_int <- ea_int
-  params@species_params$ca_int <- ca_int
-  params@species_params$ed_int <- ed_int
-  params@species_params$cd_int <- cd_int
-  params@species_params$t_d <- t_d
-  params@species_params$t_ref <- t_ref
-
-  return(params)
+    params <- setReproduction(params, RDD = RDD)
+    record_mizer_evolution(params)
+  })
 }
 
 # this function calculate the distance between neighboring values of a vector
@@ -217,69 +208,83 @@ neighbourDistance <- function(x)
 }
 
 #function that paste the different MizerSim objects
-finalTouch <- function(saveFolder,params,t_max)
+finalTouch <- function(saveFolder, params, t_max)
 {
-  # for now I am not going to be removing extinct species so the last sim will have the right species dimension
-  # the time dimension will be the sum of the time dim of the runs
-  # for more efficiency I am not going to load all the run at once but one by one
-  # the biomass of all species but the resident stays constant for one time step when introducing a new species
-  no_w <- length(params@w) # will have to this properly somewhere else
-  no_w_pp <- length(params@w_full)
-  no_phen <- dim(params@species_params)[1]
-
-  # biomass | n_other is not accounted for at the moment cause I don't know what that is
-  # not sure about the effort one yet as I need to do different fisheries scenarios to see how it behaves
-  biomass <- array(NA, dim = c(t_max+1,no_phen,no_w), dimnames = list("time" = 1:(t_max+1), "sp" = 1:no_phen, "w" = params@w))
-  biomassPP <- array(NA, dim = c(t_max+1,no_w_pp), dimnames = list("time" = 1:(t_max+1), "w" = params@w_full))
-  effort <- array(0, dim = c(t_max+1,length(unique(params@gear_params$gear))), dimnames = list("time" = 1:(t_max+1), "gear" = unique(params@gear_params$gear)))
-
-  sim_start <- 1
-  for(iRun in 1:length(dir(saveFolder)))
-  {
-    tempRun <- readRDS(paste(saveFolder,"/run",iRun,".rds",sep=""))
-    biomass[(sim_start):(sim_start-1+dim(tempRun@n)[1]),1:dim(tempRun@n)[2],] <- tempRun@n
-    biomassPP[(sim_start):(sim_start-1+dim(tempRun@n)[1]),] <- tempRun@n_pp
-    effort[(sim_start):(sim_start-1+dim(tempRun@n)[1]),] <- tempRun@effort
-    sim_start <- sim_start-1+dim(tempRun@n)[1]
+  files <- list.files(saveFolder, pattern = "^run[0-9]+\\.rds$",
+                      full.names = TRUE)
+  run_number <- as.integer(sub("^run([0-9]+)\\.rds$", "\\1",
+                               basename(files)))
+  files <- files[order(run_number)]
+  if (length(files) == 0) {
+    stop("No temporary simulation runs were found.", call. = FALSE)
   }
 
-  # reconstruct the mizer object; the last tempRun loaded contains the right @params
-  biomass[is.na(biomass)] <- 0 # don;t want any NA from mid-sim popping phenotypes
-  tempRun@n <- biomass
-  tempRun@effort <- effort
-  tempRun@n_pp <- biomassPP
-  # tempRun@n_other <- matrix(0, nrow = (t_max+1),ncol = 1, dimnames = list("time" = 1:(t_max+1), "component"))
+  time_names <- seq.int(0, t_max)
+  result <- mizer::MizerSim(params, t_dimnames = time_names)
+  biomass <- unclass(mizer::N(result))
+  biomass[] <- 0
+  biomassPP <- unclass(mizer::NResource(result))
+  biomassPP[] <- rep(initialNResource(params), each = length(time_names))
+  effort <- unclass(mizer::getEffort(result))
+  effort[] <- 0
 
-  component_names <- names(params@other_dynamics)
-  no_components <- length(component_names)
-  no_t <- t_max +1
+  sim_start <- 1
+  for (path in files) {
+    tempRun <- mizer::readSim(path)
+    run_n <- mizer::N(tempRun)
+    run_n_pp <- mizer::NResource(tempRun)
+    run_effort <- mizer::getEffort(tempRun)
+    target_time <- sim_start:(sim_start + dim(run_n)[1] - 1)
 
-  list_n_other <- rep(list(NA), no_t * no_components)
-  dim(list_n_other) <- c(no_t, no_components)
-  dimnames(list_n_other) <- list(time = 1:(t_max+1),
-                                 component = component_names)
-  tempRun@n_other <- list_n_other
+    common_sp <- intersect(dimnames(run_n)$sp, dimnames(biomass)$sp)
+    common_w <- intersect(dimnames(run_n)$w, dimnames(biomass)$w)
+    biomass[target_time, common_sp, common_w] <-
+      run_n[, common_sp, common_w, drop = FALSE]
+
+    common_w_pp <- intersect(dimnames(run_n_pp)$w, dimnames(biomassPP)$w)
+    biomassPP[target_time, common_w_pp] <-
+      run_n_pp[, common_w_pp, drop = FALSE]
+
+    common_gear <- intersect(dimnames(run_effort)$gear,
+                             dimnames(effort)$gear)
+    effort[target_time, common_gear] <-
+      run_effort[, common_gear, drop = FALSE]
+    sim_start <- utils::tail(target_time, 1)
+  }
+  if (sim_start != length(time_names)) {
+    stop("Temporary simulation runs do not cover the requested time range.",
+         call. = FALSE)
+  }
+
+  result@n <- biomass
+  result@n_pp <- biomassPP
+  result@effort <- effort
+  result@sim_params <- tempRun@sim_params
+  result@sim_params$t_start <- 0
+  result@sim_params$t_max <- t_max
 
   # update the params for any extinct species
-  for(iSpecies in tempRun@params@species_params$species)
-  {
-    itime <- dim(tempRun@n)[1]
+  sp <- species_params(result@params)
+  for (i in seq_len(nrow(sp))) {
+    iSpecies <- as.character(sp$species[i])
+    itime <- dim(result@n)[1]
     count <- 0
-    while(sum(tempRun@n[itime,iSpecies,])<=1e-30 && count < dim(tempRun@n)[1])
+    while(sum(result@n[itime,iSpecies,])<=1e-30 && count < dim(result@n)[1])
     {
       count <- count +1
       # print("species")
       # print(iSpecies)
       # print(itime)
       itime <- itime - 1
-      tempRun@params@species_params$ext[as.numeric(iSpecies)] <- itime
+      sp$ext[i] <- itime
       # print("extinction")
       # print(tempRun@params@species_params$ext)
     }
   }
+  species_params(result@params) <- sp
 
 
-  return(tempRun)
+  return(result)
 }
 
 #' Project
@@ -294,23 +299,26 @@ finalTouch <- function(saveFolder,params,t_max)
 #' @param initSpread ...
 #' @param alien ...
 #' @param alien_init_n ...
+#' @param trait_range ...
 #' @param saveFolder ...
 #' @param effort ...
+#' @param info_level Controls the amount of information reported by mizer.
 #' @return ...
 #' @export
 #' @examples
 #' \donttest{
 #' saveFolder <- file.path(tempdir(), "simTemp")
-#' dir.create(saveFolder)
-#' params <- evoParams(no_sp = 5, RDD = "extinctionRDD")
-#' sim <- evoProject(params = params, t_max = 300, mutation = 5,
-#'                   saveFolder = saveFolder)
+#' dir.create(saveFolder, showWarnings = FALSE)
+#' params <- evoParams(no_sp = 2, RDD = "extinctionRDD", info_level = 0)
+#' sim <- evoProject(params = params, t_max = 2, mutation = 0,
+#'                   saveFolder = saveFolder, info_level = 0)
 #' plot(sim)
 #' }
 evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.1, # params and initCondition cannot be both null at same time, need to specify that
                        mutation = 2, trait = "w_mat", initPool = 0, initSpread = 5, alien = 0,
                        alien_init_n = NULL, trait_range = NULL,
-                       saveFolder = file.path(tempdir(), "simTemp"), effort = 0)
+                       saveFolder = file.path(tempdir(), "simTemp"), effort = 0,
+                       info_level = mizer::default_info_level())
 {
   ## Check first if starting a new simulation or using a previous sim as parameter object
   if(is.null(initCondition))
@@ -325,18 +333,25 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
         {
           newSp <- params@species_params[params@species_params$species == iSpecies,] # perfect copy
           newSp$species <-factor(as.character(max(as.numeric(params@species_params$species))+1), levels = max(as.numeric(params@species_params$species))+1) # new species name but lineage stays the same
+          resource <- resource_params(params)
+          lambda <- resource$lambda
+          kappa <- resource$kappa
+          n <- resource$n
+          mutation_sd <- as.numeric(newSp$mutation_sd)
+          eta <- as.numeric(newSp$w_mat / newSp$w_inf)
+          z0pre <- as.numeric(newSp$z0 / newSp$w_inf ^ (n - 1))
 
           switch(trait,
                  size = {
                    # Trait = asymptotic size
-                   sd = as.numeric(mAmplitude * initSpread *  params@species_params[which(params@species_params$ecotype == iSpecies),]$w_inf)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$w_inf)
                    newSp$w_inf <- abs(newSp$w_inf + rnorm(1, 0, sd)) # change a bit the asymptotic size
                    newSp$w_mat <- newSp$w_inf * eta # calculate from the new w_inf value
                    newSp$z0 <- z0pre * as.numeric(newSp$w_inf) ^ (n - 1) # if I don't put as.numeric I lose the name z0
                  },
                  Beta = {
                    # Trait = PPMR
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$beta)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$beta)
                    newSp$beta <- abs(newSp$beta + rnorm(1, 0, sd)) # change a bit the PPMR
                    while(newSp$beta < 10) newSp$beta <-  abs(newSp$beta + rnorm(1, 0, sd))
                    alpha_e <- sqrt(2 * pi) * newSp$sigma * newSp$beta ^ (lambda - 2) * exp((lambda - 2) ^ 2 * newSp$sigma ^ 2 / 2) *
@@ -345,72 +360,75 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
                  },
                  sigma = {
                    # Trait = fedding kernel
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$sigma)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$sigma)
                    newSp$sigma <- abs(newSp$sigma + rnorm(1, 0, sd)) # change a bit the diet breadth
                    while(newSp$sigma < .5 | newSp$sigma > 5)  newSp$sigma <-  abs(newSp$sigma + rnorm(1, 0, sd))
                    alpha_e <- sqrt(2 * pi) * newSp$sigma * newSp$beta ^ (lambda - 2) * exp((lambda - 2) ^ 2 * newSp$sigma ^ 2 / 2)*
                      (pnorm(3 - (lambda - 2) * newSp$sigma) + pnorm(log(newSp$beta)/newSp$sigma + (lambda - 2) * newSp$sigma) - 1)
-                   newSp$gamma <- h * f0 / (alpha_e * kappa * (1 - f0))
+                   newSp$gamma <- newSp$h * newSp$f0 /
+                     (alpha_e * kappa * (1 - newSp$f0))
                  },
                  predation = {
                    # PPMR
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$beta)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$beta)
                    newSp$beta <- abs(newSp$beta + rnorm(1, 0, sd)) # change a bit the PPMR
                    while(newSp$beta < 10) newSp$beta <-  abs(newSp$beta + rnorm(1, 0, sd))
                    # feeding kernel
-                   sd = as.numeric(mAmplitude *  params@species_params[which(params@species_params$ecotype == iSpecies),]$sigma)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$sigma)
                    newSp$sigma <- abs(newSp$sigma + rnorm(1, 0, sd)) # change a bit the diet breadth
                    while(newSp$sigma < .5 | newSp$sigma >5 )  newSp$sigma <-  abs(newSp$sigma + rnorm(1, 0, sd))
                    # recalculate gamma if necessary
                    alpha_e <- sqrt(2 * pi) * newSp$sigma * newSp$beta ^ (lambda - 2) * exp((lambda - 2) ^ 2 * newSp$sigma ^ 2 / 2)*
                      (pnorm(3 - (lambda - 2) * newSp$sigma) + pnorm(log(newSp$beta)/newSp$sigma + (lambda - 2) * newSp$sigma) - 1)
-                   newSp$gamma <- h * f0 / (alpha_e * kappa * (1 - f0))
+                   newSp$gamma <- newSp$h * newSp$f0 /
+                     (alpha_e * kappa * (1 - newSp$f0))
                  },
                  eta = {
                    # Trait = eta
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$eta)
-                   newSp$eta <- abs(newSp$eta + rnorm(1, 0, sd)) # change a bit eta
-                   newSp$w_mat <- newSp$w_inf * newSp$eta # update
+                   sd = as.numeric(mutation_sd * initSpread * eta)
+                   eta <- abs(eta + rnorm(1, 0, sd))
+                   newSp$w_mat <- newSp$w_inf * eta
                  },
                  ed_int = {
                    # Trait = ed_int
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$ed_int)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$ed_int)
                    newSp$ed_int <- abs(newSp$ed_int + rnorm(1, 0, sd))
                    while(newSp$ed_int < 2.5) newSp$ed_int <- abs(newSp$ed_int + rnorm(1, 0, sd))
                  },
                  t_d = {
                    # Trait = ed_int
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$t_d)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$t_d)
                    newSp$t_d <- abs(newSp$t_d + rnorm(1, 0, sd))
                  },
                  temperature = {
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$ed_int)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$ed_int)
                    newSp$ed_int <-abs( newSp$ed_int + rnorm(1, 0, sd))
                    while(newSp$ed_int < 2.5) newSp$ed_int <- abs(newSp$ed_int + rnorm(1, 0, sd)) # ed_int cannot go lower than 2.5
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$t_d)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$t_d)
                    newSp$t_d <- abs(newSp$t_d + rnorm(1, 0, sd))
                  },
 
                  all = {
                    # Trait = asymptotic size
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$w_inf)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$w_inf)
                    newSp$w_inf <- abs(newSp$w_inf + rnorm(1, 0, sd)) # change a bit the asymptotic size
                    newSp$w_mat <- abs(newSp$w_inf * eta) # calculate from the new w_inf value
                    newSp$z0 <- z0pre * as.numeric(newSp$w_inf) ^ (n - 1) # if I don't put as.numeric I lose the name z0
                    # Trait = predation
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$beta)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$beta)
                    newSp$beta <- abs(newSp$beta + rnorm(1, 0, sd)) # change a bit the PPMR
-                   sd = as.numeric(mAmplitude * initSpread * params@species_params[which(params@species_params$ecotype == iSpecies),]$sigma)
+                   sd = as.numeric(mutation_sd * initSpread * newSp$sigma)
                    newSp$sigma <- abs(newSp$sigma + rnorm(1, 0, sd)) # change a bit the diet breadth
                    # calculate the new gamma
                    alpha_e <- sqrt(2 * pi) * newSp$sigma * newSp$beta ^ (lambda - 2) * exp((lambda - 2) ^ 2 * newSp$sigma ^ 2 / 2)*
                      (pnorm(3 - (lambda - 2) * newSp$sigma) + pnorm(log(newSp$beta)/newSp$sigma + (lambda - 2) * newSp$sigma) - 1)
 
-                   newSp$gamma <- h * f0 / (alpha_e * kappa * (1 - f0))
+                   newSp$gamma <- newSp$h * newSp$f0 /
+                     (alpha_e * kappa * (1 - newSp$f0))
                  },
                  {
 
-                   sd = newSp$zeta * initSpread * as.numeric(newSp[trait])
+                   sd = newSp$mutation_sd * initSpread * as.numeric(newSp[trait])
                    newSp[trait] <- abs(newSp[trait] + rnorm(1, 0, sd))
 
                  })
@@ -422,7 +440,9 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
           n_init <- rbind(n_init,n_newSp) # this include the new mutant as last column
           names(dimnames(n_init)) <- c("sp","W") # getting the dimnames back
 
-          params <- addSpecies(params = params, species_params = newSp, init_n= n_init)
+          params <- addSpecies(params = params, species_params = newSp,
+                               init_n = n_init, parent_species = iSpecies,
+                               info_level = info_level)
 
 
 
@@ -467,7 +487,12 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
   SpIdx <- unique(params@species_params$lineage) # Handy species index
 
   # The model creates short simulations and temporarily save them to free RAM space, combining them at the end
-  if(!dir.exists(saveFolder)) dir.create(saveFolder)
+  if (!dir.exists(saveFolder)) {
+    dir.create(saveFolder, recursive = TRUE)
+  }
+  run_folder <- tempfile(pattern = "mizerEvolution-", tmpdir = saveFolder)
+  dir.create(run_folder)
+  on.exit(unlink(run_folder, recursive = TRUE), add = TRUE)
 
   ## Evolution section, using mutation variable
   if(is.numeric(mutation))
@@ -526,7 +551,7 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
   mySim <- project(params, t_max = t_max_vec[1],progress_bar = F, effort = effort)
   if(length(t_max_vec) >1) # if there is at least one event planned
   {
-    saveRDS(mySim,file= paste(saveFolder,"/run1.rds", sep = ""))
+    mizer::saveSim(mySim, file.path(run_folder, "run1.rds"))
     for(iSim in 2:length(t_max_vec))
     {
       lastBiom_updated <- FALSE #if lastBiom gets updated and put in mySim@params@init_n, this becomes true and further species addition use mySim@params@init_n instead of mySim@n[dim(mySim@n)[1],,]
@@ -544,6 +569,7 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
       # print(sum(t_invasion[,t_event[iSim-1]]))
       if(sum(t_invasion[,t_event[iSim-1]])) # if t_invasion is positive it means there is an invasion
       {
+        parent_species <- NULL
         if(is.numeric(alien))
         {
           #produce alien
@@ -562,7 +588,7 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
           # TODO automatically fill below slots
           newSp$ca_int <- 0
           newSp$cd_int <- 0
-          newSp$zeta <- .2
+          newSp$mutation_sd <- .2
           newSp$fc <- .25
           newSp$f0 <- .6
           newSp$w_min_idx <- 1
@@ -572,8 +598,9 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
           # when creating alien randomly, might need to test their survivability first, in case of crazy values
         } else if (is.data.frame(alien))
         {
-          alien
-          newSp <- alien[(iSim-1),]
+          alien_row <- which(alien$time == t_event[iSim - 1])[1]
+          newSp <- alien[alien_row, , drop = FALSE]
+          parent_species <- rownames(alien)[alien_row]
           # print("invader extracted from df")
         } else {print("something went wrong")}
         # adding initial biomass and stuff
@@ -620,7 +647,11 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
         rownames(init_n)[length(rownames((init_n)))] <- as.character(newSp$species) # update the name of the mutant accordingly
 
 
-        mySim@params <- addSpecies(params = mySim@params, species_params = newSp, init_n= init_n)
+        mySim@params <- addSpecies(params = mySim@params,
+                                   species_params = newSp,
+                                   init_n = init_n,
+                                   parent_species = parent_species,
+                                   info_level = info_level)
 
         # print(mySim@params@species_params)
         # print("alien invaded the ecosystem")
@@ -693,7 +724,7 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
                    size = {
                      # Trait = asymptotic size
 
-                     sd = as.numeric(mySim@params@species_params$zeta[as.numeric(resident)] * mySim@params@species_params$w_inf[as.numeric(resident),1])
+                     sd = as.numeric(mySim@params@species_params$mutation_sd[as.numeric(resident)] * mySim@params@species_params$w_inf[as.numeric(resident),1])
                      newSp$w_inf <- newSp$w_inf + rnorm(1, 0, sd)
                      # need to get eta and Z0pre from somewhere before this works
                      # newSp$w_mat <- newSp$w_inf * newSp$eta
@@ -732,24 +763,30 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
                    #   #cat(sprintf("Its diet breadth mutes slightly.\n"))
                    # },
                    predation = {
+                     resident_params <- mySim@params@species_params[resident,]
+                     resource <- resource_params(mySim@params)
+                     lambda <- resource$lambda
+                     kappa <- resource$kappa
+                     mutation_sd <- as.numeric(resident_params$mutation_sd)
                      # PPMR
-                     sd = as.numeric(mAmplitude *  resident_params["beta"]) # standard deviation
-                     mutant["beta"] <- resident_params["beta"] + rnorm(1, 0, sd) # change a bit the PPMR
-                     while(mutant$beta < 10)
+                     sd = as.numeric(mutation_sd * resident_params$beta)
+                     newSp$beta <- resident_params$beta + rnorm(1, 0, sd)
+                     while(newSp$beta < 10)
                      {print("need to reroll beta")
-                       mutant["beta"] <- resident_params["beta"] + rnorm(1, 0, sd)}
+                       newSp$beta <- resident_params$beta + rnorm(1, 0, sd)}
                      # feeding kernel
-                     sd = as.numeric(mAmplitude *  resident_params["sigma"]) # standard deviation
-                     mutant["sigma"] <- resident_params["sigma"] + rnorm(1, 0, sd) # change a bit the diet breadth
-                     while(mutant$sigma < .5 | mutant$sigma >5)
+                     sd = as.numeric(mutation_sd * resident_params$sigma)
+                     newSp$sigma <- resident_params$sigma + rnorm(1, 0, sd)
+                     while(newSp$sigma < .5 | newSp$sigma > 5)
                      {print("need to reroll sigma")
-                       mutant["sigma"] <- resident_params["sigma"] + rnorm(1, 0, sd)}
+                       newSp$sigma <- resident_params$sigma + rnorm(1, 0, sd)}
                      # recalculate gamma if necessary
-                     alpha_e <- sqrt(2 * pi) * mutant$sigma * mutant$beta ^ (lambda - 2) * exp((lambda - 2) ^ 2 * mutant$sigma ^ 2 / 2)*
-                       (pnorm(3 - (lambda - 2) * mutant$sigma) + pnorm(log(mutant$beta)/mutant$sigma + (lambda - 2) * mutant$sigma) - 1)
-                     mutant["gamma"] <- h * f0 / (alpha_e * kappa * (1 - f0))
+                     alpha_e <- sqrt(2 * pi) * newSp$sigma * newSp$beta ^ (lambda - 2) * exp((lambda - 2) ^ 2 * newSp$sigma ^ 2 / 2)*
+                       (pnorm(3 - (lambda - 2) * newSp$sigma) + pnorm(log(newSp$beta)/newSp$sigma + (lambda - 2) * newSp$sigma) - 1)
+                     newSp$gamma <- newSp$h * newSp$f0 /
+                       (alpha_e * kappa * (1 - newSp$f0))
                      cat(sprintf("parent beta:%f, sigma:%f, gamma:%f\n",resident_params$beta,resident_params$sigma,resident_params$gamma))
-                     cat(sprintf("mutant beta:%f, sigma:%f, gamma:%f\n",mutant$beta,mutant$sigma,mutant$gamma))
+                     cat(sprintf("mutant beta:%f, sigma:%f, gamma:%f\n",newSp$beta,newSp$sigma,newSp$gamma))
                    },
                    # eta = {
                    #   # Trait = eta
@@ -796,7 +833,7 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
                    #   #cat(sprintf("Its traits mute slightly.\n"))
                    # },
                    {
-                     sd = as.numeric(mySim@params@species_params$zeta[as.numeric(resident)] * mySim@params@species_params[trait][as.numeric(resident),1])
+                     sd = as.numeric(mySim@params@species_params$mutation_sd[as.numeric(resident)] * mySim@params@species_params[trait][as.numeric(resident),1])
                      newSp[trait] <- abs(newSp[trait] + rnorm(1, 0, sd))
 
                    })
@@ -807,8 +844,10 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
             else lastBiom <- mySim@n[dim(mySim@n)[1],,]
             lastBiom_updated <- TRUE
             #n_newSp <- rep(0,dim(mySim@n)[3])
-            n_newSp = 0.05 * lastBiom[dimnames(mySim@n)$sp == resident,] # the initial abundance is 5% of the resident pop
-            lastBiom[dimnames(mySim@n)$sp ==resident,]= lastBiom[dimnames(mySim@n)$sp == resident,] - 0.05*lastBiom[dimnames(mySim@n)$sp ==resident,] # Withdraw the abundance of the mutant from its parent (we're not talking about eggs here but different ecotype already present)
+            resident_row <- which(rownames(lastBiom) == resident)
+            n_newSp <- 0.05 * lastBiom[resident_row, ]
+            lastBiom[resident_row, ] <-
+              lastBiom[resident_row, ] - n_newSp
 
 
           } else if (is.data.frame(mutation))
@@ -854,7 +893,11 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
 
           # print("new phenotype implemented")
 # print(mySim@params@other_params)
-          mySim@params <- addSpecies(params = mySim@params, species_params = newSp, init_n= init_n)
+          mySim@params <- addSpecies(params = mySim@params,
+                                     species_params = newSp,
+                                     init_n = init_n,
+                                     parent_species = if (is.numeric(mutation)) resident else NULL,
+                                     info_level = info_level)
         }
       }
       # print("mutant integrated in ecosystem, ready to project")
@@ -862,13 +905,14 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
       {# happens if mutant appears at the last time step, makes the code crash | probably obsolete but does not hurt anyone
         mySim <- project(mySim@params, t_max = t_max_vec[iSim],progress_bar = F, effort = effort)
         # print("projected until next mutant, ready to save truncated run")
-        saveRDS(mySim,file= paste(saveFolder,"/run",iSim,".rds", sep = ""))
+        mizer::saveSim(mySim,
+                       file.path(run_folder, paste0("run", iSim, ".rds")))
       }
     }
     # return(list(saveFolder,mySim@params,t_max))
     print("Data handling")
-    sim <- finalTouch(saveFolder = saveFolder, params = mySim@params, t_max = t_max)
-    unlink(saveFolder,recursive = T)
+    sim <- finalTouch(saveFolder = run_folder, params = mySim@params,
+                      t_max = t_max)
 
     return(sim)
   }
@@ -880,7 +924,10 @@ evoProject <- function(params = NULL, initCondition = NULL, t_max = 100, dt = 0.
 
 
 
-addSpecies <- function(params, species_params, interaction, defaultInteraction = 1, init_n) {
+addSpecies <- function(params, species_params, interaction,
+                       defaultInteraction = 1, init_n,
+                       parent_species = NULL,
+                       info_level = mizer::default_info_level()) {
   # check validity of parameters ----
   # assert_that(is(params, "MizerParams"), # does not work in my R version
   #             is.data.frame(species_params))
@@ -892,6 +939,34 @@ addSpecies <- function(params, species_params, interaction, defaultInteraction =
   no_new_sp <- nrow(species_params)
   new_sp <- 1:no_new_sp + no_old_sp
   no_sp <- no_old_sp + no_new_sp
+
+  # A phenotype inherits the parameters that were actually supplied for its
+  # parent, rather than the entire calculated species-parameter table. Values
+  # changed by the mutation are then overlaid. This lets current mizer versions
+  # recalculate dependent values such as w_mat25 and w_repro_max instead of
+  # validating stale copies calculated for the parent.
+  if (!is.null(parent_species)) {
+    parent_idx <- match(as.character(parent_species),
+                        as.character(params@species_params$species))
+    if (length(parent_idx) == 1 && !is.na(parent_idx)) {
+      parent_full <- as.data.frame(mizer::species_params(params)[parent_idx, ,
+                                                                 drop = FALSE])
+      inherited <- as.data.frame(
+        mizer::given_species_params(params)[parent_idx, , drop = FALSE]
+      )
+      incoming <- as.data.frame(species_params)
+      for (column in names(incoming)) {
+        changed <- !column %in% names(parent_full) ||
+          !isTRUE(all.equal(incoming[[column]][1], parent_full[[column]][1],
+                            check.attributes = FALSE))
+        if (changed || column %in% names(inherited)) {
+          inherited[[column]] <- incoming[[column]][1]
+        }
+      }
+      species_params <- inherited
+    }
+  }
+
   if (missing(interaction)) {
     # keep existing interactions between old species and
     # set interactions involving new species to 1
@@ -909,129 +984,34 @@ addSpecies <- function(params, species_params, interaction, defaultInteraction =
   } else {
     inter <- interaction
   }
-  # combine species params ----
+  new_gp <- data.frame()
+  if (!is.null(parent_species)) {
+    gp <- gear_params(params)
+    parent_gp <- gp[as.character(gp$species) %in%
+                      as.character(parent_species), , drop = FALSE]
+    if (nrow(parent_gp) > 0) {
+      new_gp <- parent_gp[rep(seq_len(nrow(parent_gp)), no_new_sp), ,
+                          drop = FALSE]
+      new_gp$species <- rep(as.character(species_params$species),
+                            each = nrow(parent_gp))
+    }
+  }
 
-  # Move linecolour and linetype into species_params
-  # params@species_params$linetype <-
-  #   params@linetype[as.character(params@species_params$species)]
-  # params@species_params$linecolour <-
-  #   params@linecolour[as.character(params@species_params$species)]
-
-  # Make sure that all columns exist in both data frames
-  missing <- setdiff(names(params@species_params), names(species_params))
-  species_params[missing] <- NA
-  missing <- setdiff(names(species_params), names(params@species_params))
-  params@species_params[missing] <- NA
-  # add the new species (with parameters described by species_params),
-  # to make a larger species_params dataframe.
-  combi_species_params <- rbind(params@species_params, species_params,
-                                stringsAsFactors = FALSE)
-
-  # fishing params | need to update them here as the default contruction functions will use wrong values / names
-  params@gear_params <- rbind(params@gear_params,params@gear_params[species_params$lineage,]) #copy catchability of parent
-  levels(params@gear_params$species) <- c(levels(params@gear_params$species),as.character(species_params$species)) # add new factor level (new mutant)
-  params@gear_params$species[dim(params@gear_params)[1]] <- as.character(species_params$species) # correct the mutant name
-
-  # new params object ----
-  # TODO check updated GUstav version for any mismatch with gear, effort, resource, etc
-  # use dataframe and global settings from params to make a new MizerParams
-  # object.
-  # TODO going to need to check if params need to be updated with the new sp or not
-  # print(3.5)
-  # print(params@initial_effort)
-  # print(params@gear_params)
-  # print("catch addspecies")
-  # print(params@catchability)
-  p <- newMultispeciesParams(
-    combi_species_params,
+  p <- mizer::addSpecies(
+    params,
+    species_params = species_params,
+    gear_params = new_gp,
     interaction = inter,
-    min_w = min(params@w),
-    max_w = max(params@w),
-    min_w_pp = min(params@w_full),
-    no_w = length(params@w),
-    initial_effort = params@initial_effort,
-    gear_params = params@gear_params,
-    # selectivity = params@selectivity,
-    # catchability = params@catchability,
-    RDD = params@rates_funcs$RDD,
-    n = params@resource_params$n,
-    r_pp = params@resource_params$r_pp,
-    kappa = params@resource_params$kappa,
-    lambda = params@resource_params$lambda,
-    w_pp_cutoff = params@resource_params$w_pp_cutoff
+    steady = FALSE,
+    info_level = info_level
   )
-
-  # Use the same resource spectrum as params
-  p@initial_n_pp <- params@initial_n_pp
-  p@cc_pp <- params@cc_pp
-  p@rr_pp <- params@rr_pp
-  p@resource_dynamics <- params@resource_dynamics
-  p@resource_params <- params@resource_params
-
-  # Add the changes to other_params and rates
-  p@other_params <- params@other_params
-  p@rates_funcs <- params@rates_funcs
-
-  # Preserve comment
-  comment(p) <- comment(params)
-  # initial solution ----
-  #TODO set initial_N of new sp as a parameters (like 5% of parent and such)
-  # p@initial_n[old_sp, ] <- params@initial_n
-  # p@initial_n[new_sp, ] <- init_n
-  p@initial_n <- init_n
-  p@A[old_sp] <- params@A
-  # Use the same psi and mu_b as before for old species
-  p@psi[old_sp, ] <- params@psi
-  p@sc <- params@sc
-  p@mu_b[old_sp, ] <- params@mu_b
-  # we assume same background death for all species
-  p@mu_b[new_sp, ] <- rep(params@mu_b[1, ], each = no_new_sp)
-
-  # Turn off self-interaction among the new species, so we can determine the
-  # growth rates, and death rates induced upon them by the pre-existing species
-  # p@interaction[new_sp, new_sp] <- 0
-  # mumu <- getMort(p)
-  # gg <- getEGrowth(p)
-  #
-  # # Compute solution for new species
-  # for (i in new_sp) {
-  #   g <- gg[i, ]
-  #   mu <- mumu[i, ]
-  #   w_inf_idx <- sum(p@w < p@species_params$w_inf[i])
-  #   idx <- p@w_min_idx[i]:(w_inf_idx - 1)
-  #   if (any(g[idx] == 0)) {
-  #     stop("Can not compute steady state due to zero growth rates for ",
-  #          p@species_params$species[i])
-  #   }
-  #   p@initial_n[i, ] <- 0
-  #   p@initial_n[i, p@w_min_idx[i]:w_inf_idx] <-
-  #     c(1, cumprod(g[idx] / ((g + mu * p@dw)[idx + 1])))
-  #
-  #   # set low abundance ----
-  #   # Normalise solution so that at its maximum it lies at 1/100 of the
-  #   # Sheldon spectrum.
-  #   # We look at the maximum of abundance times w^lambda
-  #   # because that is always an increasing function at small size.
-  #   idx <- which.max(p@initial_n[i, ] * p@w^p@resource_params$lambda)
-  #   p@initial_n[i, ] <- p@initial_n[i, ] *
-  #     p@resource_params$kappa * p@w[idx]^(-p@resource_params$lambda) / p@initial_n[i, idx] / 100
-  #   p@A[i] <- sum(p@initial_n[i, ] * p@w * p@dw * p@maturity[i, ])
-  # }
-  #
-  # if (any(is.infinite(p@initial_n))) {
-  #   stop("Candidate steady state holds infinities.")
-  # }
-  # if (any(is.na(p@initial_n) | is.nan(p@initial_n))) {
-  #   stop("Candidate steady state holds non-numeric values.")
-  # }
-  #
-  # # Turn self interaction back on
-  # p@interaction[new_sp, new_sp] <- inter[new_sp, new_sp]
-  #
-  # # Retune reproductive efficiencies of new species
-  # p <- retune_erepro(p, p@species_params$species[new_sp])
-  #
-  return(p)
+  target_n <- initialN(p)
+  common_sp <- intersect(rownames(init_n), rownames(target_n))
+  common_w <- intersect(colnames(init_n), colnames(target_n))
+  target_n[common_sp, common_w] <-
+    init_n[common_sp, common_w, drop = FALSE]
+  initialN(p) <- target_n
+  p
 }
 
 #' Stock recruitment relationship enabling extinction of species
@@ -1162,7 +1142,8 @@ alien_synthesis <- function(trait_range, n = 1){
 #' 3 consonants and 2 vowels. It is used when randomly
 #' generating invasive species
 #'
-#'
+#' @param iteration Number of names to generate.
+#' @return A character vector of generated names.
 #' @export
 
 nameGenerator <- function(iteration = 1){
@@ -1187,6 +1168,13 @@ nameGenerator <- function(iteration = 1){
 #' tempFun is a function that takes temperature parameters (temperature, t_ref, t_d) and physiological parameters (w, Ea, c_a)
 #' and returns a scalar based on the Padfield (2016) temperature performance equation. This will be upgraded in the future with
 #' a deactivation portion with Anna Gardmark's equation once it's published
+#'
+#' @param w Body weights.
+#' @param temperature Environmental temperature in degrees Celsius.
+#' @param t_ref Reference temperature in degrees Celsius.
+#' @param Ea Activation energy.
+#' @param c_a Allometric temperature coefficient.
+#' @return A matrix of temperature scaling factors.
 tempFun <- function(w, temperature, t_ref, Ea, c_a)
 {
   k = 8.617332e-5 # Boltzmann constant
@@ -1201,5 +1189,3 @@ tempFun <- function(w, temperature, t_ref, Ea, c_a)
   temperatureScalar <- t(sapply(w,FUN = function(x){x^(c_a*(temperature-(t_ref)))}) *exp((-Ea/k)*((1/temperature) - (1/(t_ref)))))
   return(temperatureScalar)
 }
-
-

@@ -20,7 +20,7 @@ plotDynamics(
 )
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim-class]{MizerSim}}
 
 \item{phenotype}{A boolean value to display the phenotype's
 abundance on the plot. Default is TRUE}
@@ -52,24 +52,20 @@ ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE}
 A plot
 }
 \description{
-
-}
-\examples{
-\donttest{
-}
+Plot biomass variations through time of species and phenotypes
 }
 \seealso{
-\link{plotting_functions},
+\link[mizer:plotting_functions]{plotting_functions},
 
-Other plotting functions: 
-\code{\link{plotPredMort}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotSpawn}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()},
-\code{\link{plotevoTrait}()}
+Other plotting functions:
+\code{\link[=plotPredMort]{plotPredMort()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotSpawn]{plotSpawn()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}},
+\code{\link[=plotevoTrait]{plotevoTrait()}}
 }
 \concept{plotting functions}

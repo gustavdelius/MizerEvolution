@@ -5,6 +5,7 @@ export(evoParams)
 export(evoProject)
 export(extinctionRDD)
 export(melt)
+export(nameGenerator)
 export(plotDynamics)
 export(plotPredMort)
 export(plotPredRate)
@@ -22,7 +23,10 @@ importFrom(grDevices,colorRampPalette)
 importFrom(methods,is)
 importFrom(plyr,aaply)
 importFrom(reshape2,melt)
-importFrom(stats,pnorm)
-importFrom(stats,rnorm)
-importFrom(stats,runif)
-importFrom(stats,time)
+importFrom(stats,
+  pnorm,
+  rlnorm,
+  rnorm,
+  runif,
+  time
+)

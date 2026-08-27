@@ -16,7 +16,7 @@ plotSpawn(
 )
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim-class]{MizerSim}}
 
 \item{time_range}{The time range (either a vector of values, a vector of min
 and max time, or a single value) to average the abundances over. Default is
@@ -33,29 +33,27 @@ ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE}
 \item{save_it}{...}
 
 \item{nameSave}{...}
+
+\item{...}{Additional arguments.}
 }
 \value{
 A plot
 }
 \description{
-
-}
-\examples{
-\donttest{
-}
+Plot spawn
 }
 \seealso{
-\link{plotting_functions},
+\link[mizer:plotting_functions]{plotting_functions},
 
-Other plotting functions: 
-\code{\link{plotDynamics}()},
-\code{\link{plotPredMort}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()},
-\code{\link{plotevoTrait}()}
+Other plotting functions:
+\code{\link[=plotDynamics]{plotDynamics()}},
+\code{\link[=plotPredMort]{plotPredMort()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}},
+\code{\link[=plotevoTrait]{plotevoTrait()}}
 }
 \concept{plotting functions}

@@ -6,7 +6,5 @@
 #'
 #' @import mizer
 #' @importFrom stats rnorm
-#' @docType package
 #' @name mizerEvo
-#' @aliases mizerEvo-package
 NULL

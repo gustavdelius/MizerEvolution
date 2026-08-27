@@ -1,8 +1,6 @@
 #' Plot biomass variations through time of species and phenotypes
 #'
-#' @description
-#'
-#' @param object An object of class \linkS4class{MizerSim}
+#' @param object An object of class \link[mizer:MizerSim-class]{MizerSim}
 #' @param phenotype A boolean value to display the phenotype's
 #' abundance on the plot. Default is TRUE
 #' @param species Plot only a specific species and its phenotypes
@@ -24,10 +22,6 @@
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL, SpIdx = NULL,
                          time_range = c(min(as.numeric(dimnames(object@n)$time)),max(as.numeric(dimnames(object@n)$time))),
                          print_it = T, returnData = F, save_it = F,
@@ -60,25 +54,53 @@ plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL
     colnames(biomassSp) = SpIdx
 
     # Check if phenotypes are extinct in biomass as well
-    spSub <- object@params@species_params$species[object@params@species_params$lineage %in% SpIdx]
-    biomass <- biomass[,as.numeric(dimnames(biomass)$sp) %in% spSub]
+    species_table <- object@params@species_params
+    spSub <- as.character(species_table$species[
+        species_table$lineage %in% SpIdx
+    ])
+    biomass <- biomass[, as.character(dimnames(biomass)$sp) %in% spSub,
+                       drop = FALSE]
 
     plotBiom <- function(x,params)
     {
         Biom <- reshape2::melt(x) # melt for ggplot
         colnames(Biom) = c("time","phen","value")
-        # create a species column
-        if(is.null(params@species_params$name))
-            Biom$sp = sapply(Biom$phen, function(x) object@params@species_params$lineage[x]) else
-                Biom$sp = sapply(Biom$phen, function(x) object@params@species_params$name[x])
+        phenotype_idx <- match(as.character(Biom$phen),
+                               as.character(params@species_params$species))
+        Biom$lineage <- as.character(params@species_params$lineage[
+            phenotype_idx
+        ])
+        if (is.null(params@species_params$name)) {
+            Biom$sp <- Biom$lineage
+        } else {
+            Biom$sp <- as.character(params@species_params$name[phenotype_idx])
+        }
         return(Biom)
     }
-    BiomSp <- plotBiom(biomassSp, object@params)
+    BiomSp <- reshape2::melt(biomassSp)
+    colnames(BiomSp) <- c("time", "phen", "value")
+    BiomSp$lineage <- as.character(BiomSp$phen)
+    lineage_idx <- match(BiomSp$lineage,
+                         as.character(species_table$lineage))
+    if (is.null(species_table$name)) {
+        BiomSp$sp <- BiomSp$lineage
+    } else {
+        BiomSp$sp <- as.character(species_table$name[lineage_idx])
+    }
     BiomSp <- BiomSp[BiomSp$value >= min_value,]
 
 
-    color_legend <- object@params@linecolour[SpIdx]
-    if(!is.null(object@params@species_params$name)) names(color_legend) <- object@params@species_params$name[as.numeric(SpIdx)]
+    lineage_ids <- as.character(SpIdx)
+    color_legend <- object@params@linecolour[lineage_ids]
+    names(color_legend) <- lineage_ids
+    if (is.null(species_table$name)) {
+        lineage_labels <- lineage_ids
+    } else {
+        lineage_names <- as.character(species_table$name[
+            match(lineage_ids, as.character(species_table$lineage))
+        ])
+        lineage_labels <- paste0(lineage_ids, ": ", lineage_names)
+    }
 
     if (phenotype) # are we displaying the phenotypes or just species total?
     {
@@ -89,28 +111,60 @@ plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL
         BiomPhen <- BiomPhen[BiomPhen$value >= min_value,]
 
         p <- ggplot(BiomSp) +
-            geom_line(aes(x = time, y = value, colour = as.factor(sp), group = sp), size = 1.2) +
-            geom_line(data = BiomPhen, aes(x = time, y = value, colour = as.factor(sp), group = phen), alpha = 0.2) +
+            geom_line(aes(x = time, y = value, colour = lineage,
+                          group = lineage), linewidth = 1.2) +
+            geom_line(data = BiomPhen,
+                      aes(x = time, y = value, colour = lineage,
+                          group = phen), alpha = 0.2) +
             scale_y_log10(name = "Biomass in g.m^-3", limits = ylimit, breaks = c(1 %o% 10^(seq(-30,10,2)))) +
             scale_x_continuous(name = "Time in years") +
             labs(color='Species') +
             theme(panel.background = element_rect(fill = "white", color = "black"),
                   panel.grid.minor = element_line(colour = "grey92"),
                   legend.key = element_rect(fill = "white"))+
-            scale_colour_manual(values=color_legend)+
+            scale_colour_manual(values = color_legend, breaks = lineage_ids,
+                                labels = lineage_labels)+
             ggtitle("Community biomass")
 
         if (!is.null(species)) # Are we looking at one species in particular or all of them? Note: need to select only one species if we want to look at traits
         {
-            # BiomPhen <- BiomPhen[BiomPhen$sp == species, ]
-            # BiomSp <- BiomSp[BiomSp$sp == species, ]
-            plotTitle <- paste("Species",species)
+            species_filter <- as.character(species)
+            selected_lineages <- intersect(species_filter,
+                                           as.character(species_table$lineage))
+            if (!is.null(species_table$name)) {
+                selected_lineages <- union(
+                    selected_lineages,
+                    as.character(species_table$lineage[
+                        as.character(species_table$name) %in% species_filter
+                    ])
+                )
+            }
+            selected_biomass <- dplyr::filter(
+                BiomPhen,
+                lineage %in% selected_lineages
+            )
+            selected_total <- dplyr::filter(
+                BiomSp,
+                lineage %in% selected_lineages
+            )
+            selected_labels <- lineage_labels[
+                match(selected_lineages, lineage_ids)
+            ]
+            plotTitle <- paste("Species", paste(selected_labels,
+                                                  collapse = ", "))
 
-            p <- ggplot(dplyr::filter(BiomPhen, sp == species)) +
-                geom_line(aes(x = time, y = value, group = phen), alpha = .75) +
+            p <- ggplot(selected_total) +
+                geom_line(aes(x = time, y = value, colour = lineage,
+                              group = lineage), linewidth = 1.2) +
+                geom_line(data = selected_biomass,
+                          aes(x = time, y = value, colour = lineage,
+                              group = phen), alpha = .2) +
                 scale_y_log10(name = "Biomass in g.m^-3", limits = ylimit, breaks = c(1 %o% 10^(seq(-30,4,2)))) +
                 scale_x_continuous(name = "Time in years") +
-                # scale_colour_gradientn(colours=jet.colors(9), limits = c(NA,NA))+
+                scale_colour_manual(values = color_legend,
+                                    breaks = lineage_ids,
+                                    labels = lineage_labels,
+                                    name = "Species") +
                 theme(panel.background = element_rect(fill = "white", color = "black"),
                       panel.grid.minor = element_line(colour = "grey92"),
                       legend.key = element_rect(fill = "white"))+
@@ -120,8 +174,12 @@ plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL
             {
                 plotTitle <- paste("Trait of species",species)
 
-                p <- ggplot(dplyr::filter(BiomPhen, sp == species)) +
-                    geom_line(aes(x = time, y = value, colour = trait, group = trait), alpha = 1) +
+                p <- ggplot(selected_total) +
+                    geom_line(aes(x = time, y = value, group = lineage),
+                              linewidth = 1.2, colour = "black") +
+                    geom_line(data = selected_biomass,
+                              aes(x = time, y = value, colour = trait,
+                                  group = phen), alpha = 1) +
                     scale_y_log10(name = "Biomass in g.m^-3", limits = ylimit, breaks = c(1 %o% 10^(seq(-30,4,2)))) +
                     scale_x_continuous(name = "Time in years") +
                     scale_colour_gradientn(colours=jet.colors(9), limits = c(NA,NA))+
@@ -135,14 +193,16 @@ plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL
     } else {
         # just total biomass per species here
         p <- ggplot(BiomSp) +
-            geom_line(aes(x = time, y = value, colour = as.factor(sp), group = sp), size = 1.2) +
+            geom_line(aes(x = time, y = value, colour = lineage,
+                          group = lineage), linewidth = 1.2) +
             scale_y_log10(name = "Biomass in g.m^-3", limits = ylimit, breaks = c(1 %o% 10^(-30:4))) +
             scale_x_continuous(name = "Time in years") +
             labs(color='Species') +
             theme(panel.background = element_rect(fill = "white", color = "black"),
                   panel.grid.minor = element_line(colour = "grey92"),
                   legend.key = element_rect(fill = "white"))+
-            scale_colour_manual(values=color_legend)+
+            scale_colour_manual(values = color_legend, breaks = lineage_ids,
+                                labels = lineage_labels)+
             ggtitle("Community biomass")
     }
 
@@ -154,8 +214,6 @@ plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL
 
 #' Plot size spectrumms of species and phenotypes
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
 #' @param min_w ...
 #' @param ylim ...
@@ -165,14 +223,11 @@ plotDynamics <- function(object,  phenotype = TRUE, species = NULL, trait = NULL
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotSS <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)), min_w =min(object@params@w)/100, ylim = c(NA,NA),
                    biomass = TRUE, print_it = TRUE, species = TRUE, community = FALSE, save_it = FALSE, nameSave = "SizeSpectrum.png", returnData = FALSE){
 
     cbPalette <- c("#999999","#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7") #9 colors for colorblind
+    min_value <- 1e-20
     # min_w = 0.001
     time_elements <- get_time_elements(object,time_range)
     spec_n <- apply(object@n[time_elements,,,drop=FALSE],c(2,3), mean)
@@ -189,30 +244,40 @@ plotSS <- function(object, time_range = max(as.numeric(dimnames(object@n)$time))
         y_axis_name = "Biomass in g.m^-3"
     }
     # Make data.frame for plot
-    plot_datSP <- data.frame(value = c(spec_n), Species = dimnames(spec_n)[[1]], w = rep(object@params@w, each=nrow(object@params@species_params)), lineage = object@params@species_params$lineage)
-    plot_datPkt <- data.frame(value = c(pkt_n), Species = "Phytoplankton", w = object@params@w_full)
+    species_table <- object@params@species_params
+    phenotype_idx <- match(rownames(spec_n),
+                           as.character(species_table$species))
+    phenotype_lineage <- as.character(species_table$lineage[phenotype_idx])
+    plot_datSP <- data.frame(
+        value = c(spec_n),
+        Species = rep(rownames(spec_n), times = ncol(spec_n)),
+        w = rep(object@params@w, each = nrow(spec_n)),
+        lineage = rep(phenotype_lineage, times = ncol(spec_n)),
+        row.names = NULL
+    )
+    plot_datPkt <- data.frame(value = c(pkt_n), Species = "Phytoplankton",
+                              w = object@params@w_full, row.names = NULL)
     # plot_datAlg <- data.frame(value = c(alg_n), Species = "Algae", w = object@params@w_full)
     # plot_datBen <- data.frame(value = c(ben_n), Species = "Benthos", w = object@params@w_full)
 
     if(community) plot_datSP <- data.frame(value = apply(spec_n, 2, sum), w = object@params@w) else if (species)
     {
-        dimnames(spec_n)$sp = object@params@species_params$lineage
-        SpIdx = unique(object@params@species_params$lineage)
-        spec_sp = matrix(data = NA, ncol = dim(spec_n)[2], nrow = length(SpIdx), dimnames = list(as.character(SpIdx),dimnames(spec_n)$size))
-        names(dimnames(spec_sp))=list("species","size")
-
-        for (i in 1:dim(spec_sp)[1])
-        {
-            temp = spec_n # save to manip
-            temp[which(rownames(spec_n) != i), ] = 0 # make everything but the targeted species to go 0 to have correct normalisation
-            temp = apply(temp, 2, sum)
-            spec_sp[i, ] = temp
-        }
-        plot_datSP <- data.frame(value = c(spec_sp), Species = dimnames(spec_sp)[[1]], w = rep(object@params@w, each=length(SpIdx)))
+        spec_sp <- rowsum(spec_n, group = phenotype_lineage,
+                          reorder = FALSE)
+        SpIdx <- rownames(spec_sp)
+        plot_datSP <- data.frame(
+            value = c(spec_sp),
+            Species = rep(SpIdx, times = ncol(spec_sp)),
+            w = rep(object@params@w, each = length(SpIdx)),
+            row.names = NULL
+        )
     }
-    # lop off 0s in background and apply min_w
-    plot_datSP <- plot_datSP[(plot_datSP$value > 0) & (plot_datSP$w >= min_w),]
-    plot_datPkt <- plot_datPkt[(plot_datPkt$value > 0) & (plot_datPkt$w >= min_w),]
+    # Remove numerical extinction dust and apply the lower size limit. The
+    # threshold matches current mizer spectrum plotting.
+    plot_datSP <- plot_datSP[(plot_datSP$value >= min_value) &
+                                 (plot_datSP$w >= min_w),]
+    plot_datPkt <- plot_datPkt[(plot_datPkt$value >= min_value) &
+                                   (plot_datPkt$w >= min_w),]
     # plot_datAlg <- plot_datAlg[(plot_datAlg$value > 0) & (plot_datAlg$w >= min_w),]
     # plot_datBen <- plot_datBen[(plot_datBen$value > 0) & (plot_datBen$w >= min_w),]
     #getPalette = colorRampPalette(brewer.pal(9, "Set1"))# increase the number of colors used
@@ -221,7 +286,7 @@ plotSS <- function(object, time_range = max(as.numeric(dimnames(object@n)$time))
     {
         p <- ggplot(plot_datSP) +
             geom_line(aes(x=w, y = value)) +
-            geom_line(data = plot_datPkt, aes(x = w, y = value, group = Species),alpha = 0.5, color = "blue", size = 1.5) +
+            geom_line(data = plot_datPkt, aes(x = w, y = value, group = Species),alpha = 0.5, color = "blue", linewidth = 1.5) +
             # geom_line(data = plot_datAlg, aes(x = w, y = value, group = Species),alpha = 0.5, color = "green", size = 1.5) +
             # geom_line(data = plot_datBen, aes(x = w, y = value, group = Species),alpha = 0.5, color = "yellow", size = 1.5) +
             scale_x_continuous(name = "Size in g", trans = "log10", breaks = c(1 %o% 10^(-6:5)))+
@@ -237,7 +302,7 @@ plotSS <- function(object, time_range = max(as.numeric(dimnames(object@n)$time))
     {
         p <- ggplot(plot_datSP) +
             geom_line(aes(x=w, y = value, colour = as.factor(Species), group = Species)) +
-            geom_line(data = plot_datPkt, aes(x = w, y = value, group = Species),alpha = 0.5, color = "blue", size = 1.5) +
+            geom_line(data = plot_datPkt, aes(x = w, y = value, group = Species),alpha = 0.5, color = "blue", linewidth = 1.5) +
             # geom_line(data = plot_datAlg, aes(x = w, y = value, group = Species),alpha = 0.5, color = "green", size = 1.5) +
             # geom_line(data = plot_datBen, aes(x = w, y = value, group = Species),alpha = 0.5, color = "yellow", size = 1.5) +
             scale_x_continuous(name = "Size in g", trans = "log10", breaks = c(1 %o% 10^(-6:5)))+
@@ -254,7 +319,7 @@ plotSS <- function(object, time_range = max(as.numeric(dimnames(object@n)$time))
     {
         p <- ggplot(plot_datSP) +
             geom_line(aes(x=w, y = value, colour = as.factor(lineage), group = Species)) +
-            geom_line(data = plot_datPkt, aes(x = w, y = value, group = Species),alpha = 0.5, color = "blue", size = 1.5) +
+            geom_line(data = plot_datPkt, aes(x = w, y = value, group = Species),alpha = 0.5, color = "blue", linewidth = 1.5) +
             # geom_line(data = plot_datAlg, aes(x = w, y = value, group = Species),alpha = 0.5, color = "green", size = 1.5) +
             # geom_line(data = plot_datBen, aes(x = w, y = value, group = Species),alpha = 0.5, color = "yellow", size = 1.5) +
             scale_x_continuous(name = "Size in g", trans = "log10", breaks = c(1 %o% 10^(-6:5)))+
@@ -275,17 +340,13 @@ plotSS <- function(object, time_range = max(as.numeric(dimnames(object@n)$time))
 
 #' Plot feeding level
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
+#' @param start Index of the first size class to display.
+#' @param every Spacing between displayed size classes.
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotevoFeeding <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)), species = T, start = 1000, every = 1000,
                            print_it = T, returnData = F, save_it =F, nameSave = "Feeding.png"){
 
@@ -418,17 +479,13 @@ plotevoFeeding <- function(object, time_range = max(as.numeric(dimnames(object@n
 
 #' Plot growth
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
+#' @param ylim Limits for the y axis.
+#' @param ... Additional arguments.
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotevoGrowth <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)), species = T, print_it = T, returnData = F, save_it = F, ylim = c(NA,NA),
                           nameSave = "Growth.png",...){
 
@@ -486,19 +543,18 @@ plotevoGrowth <- function(object, time_range = max(as.numeric(dimnames(object@n)
 
 #' Plot starvation level
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotStarvation <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)), species = T, print_it = T, returnData = F, save_it =F,
                            nameSave = "Starvation.png"){
+
+    if (!requireNamespace("mizerStarvation", quietly = TRUE)) {
+        stop("`plotStarvation()` requires the suggested mizerStarvation package.",
+             call. = FALSE)
+    }
 
 
     cbPalette <- c("#999999","#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7") #9 colors for colorblind
@@ -512,7 +568,11 @@ plotStarvation <- function(object, time_range = max(as.numeric(dimnames(object@n
 
         n <- array(object@n[x,,],dim=dim(object@n)[2:3])
         dimnames(n) <- dimnames(object@n)[2:3]
-        starv <- getSMort(object@params, n=n, n_pp = object@n_pp[x,])#,n_aa = object@n_aa[x,],n_bb = object@n_bb[x,],
+        starv <- mizerStarvation::getStarvMort(
+            object@params,
+            n = n,
+            n_pp = object@n_pp[x,]
+        )#,n_aa = object@n_aa[x,],n_bb = object@n_bb[x,],
         #intakeScalar = object@intTempScalar[,,x], metScalar = object@metTempScalar[,,x])
         return(starv)})
 
@@ -560,27 +620,22 @@ plotStarvation <- function(object, time_range = max(as.numeric(dimnames(object@n
 
 #' Plot total mortality
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
+#' @param comments A boolean controlling console comments.
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotevoMortality <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)),print_it = TRUE, returnData = F, comments = T){
 
     # effort can be in 2 forms
 
     if(is.matrix(object@effort)) effort = object@effort[time_range,]  else effort = object@effort[time_range]
 
-    z <- getZ(object@params, n = object@n[time_range,,], n_pp = object@n_pp[time_range,],#n_aa = object@n_aa[time_range,],n_bb = object@n_bb[time_range,],
+    z <- getMort(object@params, n = object@n[time_range,,], n_pp = object@n_pp[time_range,],#n_aa = object@n_aa[time_range,],n_bb = object@n_bb[time_range,],
               effort = effort)#,
     #intakeScalar = object@intTempScalar[,,time_range], metScalar = object@metTempScalar[,,time_range], morScalar = object@morTempScalar[,,time_range])
-    dimnames(z)$prey = object@params@species_params$lineage
+    dimnames(z)$sp = object@params@species_params$lineage
     SpIdx = as.numeric(as.character(sort(unique(object@params@species_params$lineage)))) # get the species names
 
     # need to get rid of the extinct species at that time in SpIdx
@@ -594,8 +649,8 @@ plotevoMortality <- function(object, time_range = max(as.numeric(dimnames(object
     #   SpIdx <- as.numeric(names(d))
     # } else {SpIdx <- as.numeric(rownames(d))}
 
-    z_sp = matrix(data = NA, ncol = dim(z)[2], nrow = length(SpIdx), dimnames = list(SpIdx,dimnames(z)$w_prey)) # prepare the new object
-    names(dimnames(z_sp))=list("prey","w_prey")
+    z_sp = matrix(data = NA, ncol = dim(z)[2], nrow = length(SpIdx), dimnames = list(SpIdx,dimnames(z)$w)) # prepare the new object
+    names(dimnames(z_sp))=list("sp","w")
 
     for (iSpecies in SpIdx)
     {
@@ -627,18 +682,12 @@ plotevoMortality <- function(object, time_range = max(as.numeric(dimnames(object
 
 #' Plot spawn
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
+#' @param ... Additional arguments.
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
-
 plotSpawn <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)), species = T, print_it = T, returnData = F, save_it = F,
                       nameSave = "Spawn.png",...){
 
@@ -698,18 +747,12 @@ plotSpawn <- function(object, time_range = max(as.numeric(dimnames(object@n)$tim
 
 #' Plot predation rate
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
 #' @param ylim ...
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotPredRate <- function(object, time_range = max(as.numeric(dimnames(object@n)$time)), species = T, ylim = c(NA,NA),
                          print_it = T, returnData = F, save_it = F, nameSave = "PredRate.png"){
 
@@ -820,7 +863,7 @@ plotPredMort <- function(object, species = NULL,
                            w = rep(params@w, each = length(species)))
     p <- ggplot(plot_dat) +
         geom_line(aes(x = w, y = value, colour = Species,
-                      linetype = Species, size = Species))
+                      linetype = Species, linewidth = Species))
 
     linesize <- rep(0.8, length(params@linetype))
     names(linesize) <- names(params@linetype)
@@ -831,24 +874,20 @@ plotPredMort <- function(object, species = NULL,
                            limits = c(0, max(plot_dat$value))) +
         scale_colour_manual(values = params@linecolour) +
         scale_linetype_manual(values = params@linetype) +
-        scale_size_manual(values = linesize)
+        scale_linewidth_manual(values = linesize)
     return(p)
 }
 
 
 #' Plot trait evolution through time
 #'
-#' @description
-#'
 #' @inheritParams plotDynamics
+#' @param Normalisation A boolean controlling whether abundances are normalised.
+#' @param traitID Optional trait identifier used for the colour scale.
 #' @return A plot
 #' @export
 #' @family plotting functions
 #' @seealso [plotting_functions],
-#' @examples
-#' \donttest{
-#' }
-
 plotevoTrait <- function(object, SpIdx = NULL, Normalisation = F, returnData = T, traitID = NULL)
 {
     cbPalette <- c("#999999","#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7") #9 colors for colorblind

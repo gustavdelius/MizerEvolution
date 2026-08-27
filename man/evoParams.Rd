@@ -39,7 +39,12 @@ evoParams(
   perfect_scaling = FALSE,
   updateParams = NULL,
   ea_int = 0,
-  ca_int = 0
+  ca_int = 0,
+  ed_int = 0,
+  cd_int = 0,
+  t_ref = 0,
+  t_d = 0,
+  info_level = mizer::default_info_level()
 )
 }
 \arguments{
@@ -105,7 +110,7 @@ explicitly.}
 calculated from critical feeding level argument \code{fc}.}
 
 \item{gamma}{Volumetric search rate. If not provided, default is determined
-by \code{\link[=get_gamma_default]{get_gamma_default()}} using the value of \code{f0}.}
+by \code{\link[mizer:get_gamma_default]{get_gamma_default()}} using the value of \code{f0}.}
 
 \item{zeta}{...}
 
@@ -144,6 +149,16 @@ particular all other scaling corrections are turned on.}
 \item{ea_int}{...}
 
 \item{ca_int}{...}
+
+\item{ed_int}{...}
+
+\item{cd_int}{...}
+
+\item{t_ref}{...}
+
+\item{t_d}{...}
+
+\item{info_level}{Controls the amount of information reported by mizer.}
 }
 \value{
 An object of type \code{MizerParams}
@@ -153,7 +168,7 @@ this will either set up new params as usual or convert Mizer params to MizerEvo 
 }
 \examples{
 \dontrun{
-params <- newTraitParams()
+params <- evoParams(info_level = 0)
 sim <- project(params, t_max = 5, effort = 0)
 plotSpectra(sim)
 }

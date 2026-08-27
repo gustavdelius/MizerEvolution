@@ -7,7 +7,7 @@
 plotPredMort(object, species = NULL, time_range, highlight = NULL)
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim-class]{MizerSim}}
 
 \item{species}{Plot only a specific species and its phenotypes
 Default is NULL}
@@ -35,17 +35,17 @@ plotPredMort(sim, time_range = 10:20)
 }
 }
 \seealso{
-\link{plotting_functions},  \code{\link[=getPredMort]{getPredMort()}}
+\link[mizer:plotting_functions]{plotting_functions},  \code{\link[mizer:getPredMort]{getPredMort()}}
 
-Other plotting functions: 
-\code{\link{plotDynamics}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotSpawn}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()},
-\code{\link{plotevoTrait}()}
+Other plotting functions:
+\code{\link[=plotDynamics]{plotDynamics()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotSpawn]{plotSpawn()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}},
+\code{\link[=plotevoTrait]{plotevoTrait()}}
 }
 \concept{plotting functions}

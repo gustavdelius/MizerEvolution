@@ -5,8 +5,8 @@
 \title{Project}
 \usage{
 evoProject(
-  initCondition = NULL,
   params = NULL,
+  initCondition = NULL,
   t_max = 100,
   dt = 0.1,
   mutation = 2,
@@ -17,13 +17,14 @@ evoProject(
   alien_init_n = NULL,
   trait_range = NULL,
   saveFolder = file.path(tempdir(), "simTemp"),
-  effort = 0
+  effort = 0,
+  info_level = mizer::default_info_level()
 )
 }
 \arguments{
-\item{initCondition}{...}
-
 \item{params}{...}
+
+\item{initCondition}{...}
 
 \item{t_max}{...}
 
@@ -41,9 +42,13 @@ evoProject(
 
 \item{alien_init_n}{...}
 
+\item{trait_range}{...}
+
 \item{saveFolder}{...}
 
 \item{effort}{...}
+
+\item{info_level}{Controls the amount of information reported by mizer.}
 }
 \value{
 ...
@@ -54,10 +59,10 @@ Project
 \examples{
 \donttest{
 saveFolder <- file.path(tempdir(), "simTemp")
-dir.create(saveFolder)
-params <- evoParams(no_sp = 5, RDD = "extinctionRDD")
-sim <- evoProject(params = params, t_max = 300, mutation = 5,
-                  saveFolder = saveFolder)
+dir.create(saveFolder, showWarnings = FALSE)
+params <- evoParams(no_sp = 2, RDD = "extinctionRDD", info_level = 0)
+sim <- evoProject(params = params, t_max = 2, mutation = 0,
+                  saveFolder = saveFolder, info_level = 0)
 plot(sim)
 }
 }
