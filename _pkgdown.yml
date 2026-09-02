@@ -1,0 +1,50 @@
+# Configuration for the mizerEvolution website using pkgdown
+
+url: https://sizespectrum.org/mizerEvolution
+
+template:
+  bootstrap: 5
+  params:
+    bootswatch: cerulean
+  light-switch: true
+  math-rendering: mathjax
+
+navbar:
+  structure:
+    left: [intro, reference, news]
+    right: [mizer, github]
+  components:
+    home: ~
+    mizer:
+      text: mizer Home
+      href: https://sizespectrum.org/mizer
+
+development:
+  mode: auto
+
+reference:
+- title: Setting up evolutionary models
+  desc: Functions for creating and customizing evolutionary parameters.
+  contents:
+  - evoParams
+  - extinctionRDD
+  - alien_synthesis
+  - nameGenerator
+  - tempFun
+- title: Running simulations
+  desc: Projecting the model forward in time with mutation and species invasion.
+  contents:
+  - evoProject
+- title: Visualising results
+  desc: Plotting evolutionary dynamics, traits, spectra, and vital rates.
+  contents:
+  - plotDynamics
+  - plotSS
+  - plotevoFeeding
+  - plotevoGrowth
+  - plotStarvation
+  - plotevoMortality
+  - plotSpawn
+  - plotPredRate
+  - plotPredMort
+  - plotevoTrait

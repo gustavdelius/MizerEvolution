@@ -6,13 +6,13 @@
 \usage{
 evoParams(
   no_sp = 11,
-  min_w_inf = 10,
-  max_w_inf = 10^4,
+  min_w_max = 10,
+  max_w_max = 10^4,
   min_w = 10^(-3),
-  max_w = max_w_inf,
+  max_w = max_w_max,
   eta = 10^(-0.6),
-  min_w_mat = min_w_inf * eta,
-  no_w = log10(max_w_inf/min_w) * 20 + 1,
+  min_w_mat = min_w_max * eta,
+  no_w = log10(max_w_max/min_w) * 20 + 1,
   min_w_pp = 1e-10,
   w_pp_cutoff = min_w_mat,
   n = 2/3,
@@ -30,7 +30,8 @@ evoParams(
   gamma = NA,
   zeta = 0.2,
   ext_mort_prop = 0,
-  R_factor = 4,
+  reproduction_level = 1/4,
+  R_factor = deprecated(),
   gear_names = "knife_edge_gear",
   knife_edge_size = 1000,
   RDD = "extinctionRDD",
@@ -39,31 +40,38 @@ evoParams(
   perfect_scaling = FALSE,
   updateParams = NULL,
   ea_int = 0,
-  ca_int = 0
+  ca_int = 0,
+  ed_int = 0,
+  cd_int = 0,
+  t_ref = 0,
+  t_d = 0,
+  min_w_inf = deprecated(),
+  max_w_inf = deprecated(),
+  info_level = default_info_level()
 )
 }
 \arguments{
 \item{no_sp}{The number of species in the model.}
 
-\item{min_w_inf}{The asymptotic size of the smallest species in the
+\item{min_w_max}{The maximum size of the smallest species in the
 community. This will be rounded to lie on a grid point.}
 
-\item{max_w_inf}{The asymptotic size of the largest species in the community.
+\item{max_w_max}{The maximum size of the largest species in the community.
 This will be rounded to lie on a grid point.}
 
 \item{min_w}{The size of the the egg of the smallest species. This also
 defines the start of the community size spectrum.}
 
 \item{max_w}{The largest size in the model. By default this is set to the
-largest asymptotic size \code{max_w_inf}. Setting it to something larger
+largest maximum size \code{max_w_max}. Setting it to something larger
 only makes sense if you plan to add larger species to the model later.}
 
-\item{eta}{Ratio between maturity size and asymptotic size of a species.
+\item{eta}{Ratio between maturity size and maximum size of a species.
 Ignored if \code{min_w_mat} is supplied. Default is 10^(-0.6),
 approximately 1/4.}
 
 \item{min_w_mat}{The maturity size of the smallest species. Default value is
-\code{eta * min_w_inf}. This will be rounded to lie on a grid point.}
+\code{eta * min_w_max}. This will be rounded to lie on a grid point.}
 
 \item{no_w}{The number of size bins in the community spectrum. These bins
 will be equally spaced on a logarithmic scale. Default value is such that
@@ -73,7 +81,7 @@ there are 50 bins for each factor of 10 in weight.}
 is set to the smallest value at which any of the consumers can feed.}
 
 \item{w_pp_cutoff}{The largest size of the resource spectrum. Default value
-is max_w_inf unless \code{perfect_scaling = TRUE} when it is Inf.}
+is max_w_max unless \code{perfect_scaling = TRUE} when it is Inf.}
 
 \item{n}{Scaling exponent of the maximum intake rate.}
 
@@ -105,18 +113,18 @@ explicitly.}
 calculated from critical feeding level argument \code{fc}.}
 
 \item{gamma}{Volumetric search rate. If not provided, default is determined
-by \code{\link[=get_gamma_default]{get_gamma_default()}} using the value of \code{f0}.}
+by \code{\link[mizer:get_gamma_default]{mizer::get_gamma_default()}} using the value of \code{f0}.}
 
-\item{zeta}{...}
+\item{zeta}{Amplitude of lognormal distribution around trait when generating
+new phenotypes.}
 
 \item{ext_mort_prop}{The proportion of the total mortality that comes from
 external mortality, i.e., from sources not explicitly modelled. A number in
 the interval [0, 1).}
 
-\item{R_factor}{The factor such that \code{R_max = R_factor * R}, where \code{R_max}
-is the maximum reproduction rate allowed and \code{R} is the steady-state
-reproduction rate. Thus the larger \code{R_factor} the less the impact of the
-density-dependence.}
+\item{reproduction_level}{Level of density dependence in reproduction.}
+
+\item{R_factor}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{reproduction_level = 1 / R_factor} instead.}
 
 \item{gear_names}{The names of the fishing gears for each species. A
 character vector, the same length as the number of species.}
@@ -125,10 +133,10 @@ character vector, the same length as the number of species.}
 fish. A single value for each gear or a vector with one value for each
 gear.}
 
-\item{RDD}{...}
+\item{RDD}{Stock recruitment relationship function name. Default is \code{"extinctionRDD"}.}
 
 \item{egg_size_scaling}{If TRUE, the egg size is a constant fraction of the
-maximum size of each species. This fraction is \code{min_w / min_w_inf}. If
+maximum size of each species. This fraction is \code{min_w / min_w_max}. If
 FALSE, all species have the egg size \code{w_min}.}
 
 \item{resource_scaling}{If TRUE, the carrying capacity for larger resource
@@ -139,23 +147,37 @@ present in the same size range.}
 abundance, growth before reproduction and death are perfect power laws. In
 particular all other scaling corrections are turned on.}
 
-\item{updateParams}{...}
+\item{updateParams}{Optional \code{MizerParams} object to convert into evolutionary parameters.}
 
-\item{ea_int}{...}
+\item{ea_int}{Temperature parameter Ea for intake.}
 
-\item{ca_int}{...}
+\item{ca_int}{Temperature parameter ca for intake.}
+
+\item{ed_int}{Temperature parameter Ed for metabolism.}
+
+\item{cd_int}{Temperature parameter cd for metabolism.}
+
+\item{t_ref}{Reference temperature.}
+
+\item{t_d}{Deactivation temperature.}
+
+\item{min_w_inf}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{min_w_max} instead.}
+
+\item{max_w_inf}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{max_w_max} instead.}
+
+\item{info_level}{Controls the amount of information messages shown.}
 }
 \value{
 An object of type \code{MizerParams}
 }
 \description{
-this will either set up new params as usual or convert Mizer params to MizerEvo params if given a mizer.params object (TODO)
+Sets up a \code{MizerParams} object for an evolutionary or invasion model.
 }
 \examples{
 \dontrun{
-params <- newTraitParams()
-sim <- project(params, t_max = 5, effort = 0)
-plotSpectra(sim)
+params <- evoParams(no_sp = 5)
+sim <- evoProject(params, t_max = 5)
+plotDynamics(sim)
 }
 }
 \concept{functions for setting up models}

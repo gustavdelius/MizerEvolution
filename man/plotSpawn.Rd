@@ -7,55 +7,60 @@
 plotSpawn(
   object,
   time_range = max(as.numeric(dimnames(object@n)$time)),
-  species = T,
-  print_it = T,
-  returnData = F,
-  save_it = F,
+  species = TRUE,
+  print_it = TRUE,
+  returnData = FALSE,
+  save_it = FALSE,
   nameSave = "Spawn.png",
   ...
 )
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim]{mizer::MizerSim}.}
 
 \item{time_range}{The time range (either a vector of values, a vector of min
 and max time, or a single value) to average the abundances over. Default is
-the final time step.}
+the entire simulation time range.}
 
-\item{species}{Plot only a specific species and its phenotypes
-Default is NULL}
+\item{species}{Plot only a specific species and its phenotypes.
+Default is NULL.}
 
-\item{print_it}{A boolean value that displays comments. Default is TRUE}
+\item{print_it}{A boolean value that displays the plot. Default is TRUE.}
 
 \item{returnData}{A boolean value that controls the output. Either a dataframe
-ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE}
+ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE.}
 
-\item{save_it}{...}
+\item{save_it}{A boolean value to save the plot. Default is FALSE.}
 
-\item{nameSave}{...}
+\item{nameSave}{File name for saving the plot. Default is \code{"Biomass.png"}.}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
-A plot
+A ggplot object, or data frame if \code{returnData = TRUE}.
 }
 \description{
-
+Plots the energy allocated to reproduction for each species across sizes.
 }
 \examples{
 \donttest{
+params <- evoParams(no_sp = 5)
+sim <- evoProject(params, t_max = 20)
+plotSpawn(sim)
 }
 }
 \seealso{
-\link{plotting_functions},
+\link[mizer:plotting_functions]{mizer::plotting_functions}
 
-Other plotting functions: 
-\code{\link{plotDynamics}()},
-\code{\link{plotPredMort}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()},
-\code{\link{plotevoTrait}()}
+Other plotting functions:
+\code{\link[=plotDynamics]{plotDynamics()}},
+\code{\link[=plotPredMort]{plotPredMort()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}},
+\code{\link[=plotevoTrait]{plotevoTrait()}}
 }
 \concept{plotting functions}

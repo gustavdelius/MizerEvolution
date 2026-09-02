@@ -2,21 +2,18 @@
 % Please edit documentation in R/evoParams.R
 \name{alien_synthesis}
 \alias{alien_synthesis}
-\title{function generating new alien species}
+\title{Generate new alien species parameters}
 \usage{
-alien_synthesis(trait_range, n = 1)
+alien_synthesis(trait_range = NULL, n = 1)
 }
 \arguments{
-\item{trait_range}{a dataframe containing the
-parameters to change and their accepted values.
-Default is NULL, leading to the use of the NS_params
-object}
+\item{trait_range}{A data frame containing parameter ranges, or \code{NULL} for defaults.}
 
-\item{n}{An integer to know the number of aliens to
-generate}
+\item{n}{Number of alien species to generate. Default is 1.}
+}
+\value{
+A data frame of species parameters.
 }
 \description{
-Function uses a range of trait to produce alien
-Default range of trait is based on North Sea
-parameters but can be supplied by user
+Uses a range of traits to produce parameters for an invading species.
 }

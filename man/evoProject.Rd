@@ -2,11 +2,11 @@
 % Please edit documentation in R/evoParams.R
 \name{evoProject}
 \alias{evoProject}
-\title{Project}
+\title{Project evolutionary simulation forward in time}
 \usage{
 evoProject(
-  initCondition = NULL,
   params = NULL,
+  initCondition = NULL,
   t_max = 100,
   dt = 0.1,
   mutation = 2,
@@ -21,43 +21,46 @@ evoProject(
 )
 }
 \arguments{
-\item{initCondition}{...}
+\item{params}{A \code{MizerParams} object created by \code{\link[=evoParams]{evoParams()}}.}
 
-\item{params}{...}
+\item{initCondition}{An optional previous \code{MizerSim} object to continue from.}
 
-\item{t_max}{...}
+\item{t_max}{Total simulation time in years. Default is 100.}
 
-\item{dt}{...}
+\item{dt}{Time step for projection. Default is 0.1.}
 
-\item{mutation}{...}
+\item{mutation}{Mutation rate per time step per thousand (if numeric), or a data frame specifying mutation events.}
 
-\item{trait}{...}
+\item{trait}{The trait subject to mutation. Default is \code{"w_mat"}.}
 
-\item{initPool}{...}
+\item{initPool}{Initial number of mutant phenotypes created at start. Default is 0.}
 
-\item{initSpread}{...}
+\item{initSpread}{Spread factor for initial phenotype trait distribution. Default is 5.}
 
-\item{alien}{...}
+\item{alien}{Rate of alien invasions per time step per thousand (if numeric), or a data frame of invading species.}
 
-\item{alien_init_n}{...}
+\item{alien_init_n}{Multiplier for initial alien abundance density.}
 
-\item{saveFolder}{...}
+\item{trait_range}{Optional trait range data frame for \code{\link[=alien_synthesis]{alien_synthesis()}}.}
 
-\item{effort}{...}
+\item{saveFolder}{Directory for storing temporary simulation step files.}
+
+\item{effort}{Fishing effort. Default is 0.}
 }
 \value{
-...
+A \code{MizerSim} object containing the full evolutionary trajectory.
 }
 \description{
-Project
+Runs an evolutionary simulation by alternating projection steps and phenotype
+mutation / species invasion events.
 }
 \examples{
 \donttest{
 saveFolder <- file.path(tempdir(), "simTemp")
-dir.create(saveFolder)
+dir.create(saveFolder, showWarnings = FALSE)
 params <- evoParams(no_sp = 5, RDD = "extinctionRDD")
-sim <- evoProject(params = params, t_max = 300, mutation = 5,
+sim <- evoProject(params = params, t_max = 50, mutation = 5,
                   saveFolder = saveFolder)
-plot(sim)
+plotDynamics(sim)
 }
 }
