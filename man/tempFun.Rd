@@ -2,14 +2,25 @@
 % Please edit documentation in R/evoParams.R
 \name{tempFun}
 \alias{tempFun}
-\title{tempFun is a function that takes temperature parameters (temperature, t_ref, t_d) and physiological parameters (w, Ea, c_a)
-and returns a scalar based on the Padfield (2016) temperature performance equation. This will be upgraded in the future with
-a deactivation portion with Anna Gardmark's equation once it's published}
+\title{Calculate temperature scalar}
 \usage{
 tempFun(w, temperature, t_ref, Ea, c_a)
 }
+\arguments{
+\item{w}{Vector of body weights.}
+
+\item{temperature}{Ambient temperature in Celsius.}
+
+\item{t_ref}{Reference temperature in Celsius.}
+
+\item{Ea}{Activation energy.}
+
+\item{c_a}{Temperature scaling parameter.}
+}
+\value{
+A numeric matrix of temperature scalars.
+}
 \description{
-tempFun is a function that takes temperature parameters (temperature, t_ref, t_d) and physiological parameters (w, Ea, c_a)
-and returns a scalar based on the Padfield (2016) temperature performance equation. This will be upgraded in the future with
-a deactivation portion with Anna Gardmark's equation once it's published
+Calculates a physiological temperature scalar based on the Padfield (2016)
+temperature performance equation.
 }

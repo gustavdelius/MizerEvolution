@@ -7,14 +7,12 @@
 extinctionRDD(rdi, species_params, ...)
 }
 \arguments{
-\item{rdi}{...}
+\item{rdi}{Vector of density-independent reproduction rates.}
 
-\item{species_params}{...}
+\item{species_params}{Data frame with species parameters.}
 
-\item{...}{...}
+\item{...}{Additional arguments.}
 }
 \description{
-when a species reaches an abundance threshold its recruitment gets disabled, species is later removed
-For now each species acts as its own
-TODO at the moment I am using rdi to apply the threhold but it should be done on n directly
+When a species reaches an abundance threshold its recruitment gets disabled.
 }

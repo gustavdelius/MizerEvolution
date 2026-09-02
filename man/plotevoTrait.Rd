@@ -7,41 +7,48 @@
 plotevoTrait(
   object,
   SpIdx = NULL,
-  Normalisation = F,
-  returnData = T,
+  Normalisation = FALSE,
+  returnData = TRUE,
   traitID = NULL
 )
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim]{mizer::MizerSim}.}
 
-\item{SpIdx}{Display a subset of species}
+\item{SpIdx}{Display a subset of species.}
+
+\item{Normalisation}{A boolean indicating whether to normalize the mean trait by initial trait value. Default is FALSE.}
 
 \item{returnData}{A boolean value that controls the output. Either a dataframe
-ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE}
+ready for ggplot (TRUE) or the plot itself (FALSE). Default is FALSE.}
+
+\item{traitID}{The trait column name to plot. Default is \code{"w_mat"}.}
 }
 \value{
-A plot
+A ggplot object, or data list if \code{returnData = TRUE}.
 }
 \description{
-
+Plots the mean and standard deviation of selected traits through time for each species lineage.
 }
 \examples{
 \donttest{
+params <- evoParams(no_sp = 5)
+sim <- evoProject(params, t_max = 20)
+plotevoTrait(sim)
 }
 }
 \seealso{
-\link{plotting_functions},
+\link[mizer:plotting_functions]{mizer::plotting_functions}
 
-Other plotting functions: 
-\code{\link{plotDynamics}()},
-\code{\link{plotPredMort}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotSpawn}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()}
+Other plotting functions:
+\code{\link[=plotDynamics]{plotDynamics()}},
+\code{\link[=plotPredMort]{plotPredMort()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotSpawn]{plotSpawn()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}}
 }
 \concept{plotting functions}

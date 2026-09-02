@@ -7,45 +7,43 @@
 plotPredMort(object, species = NULL, time_range, highlight = NULL)
 }
 \arguments{
-\item{object}{An object of class \linkS4class{MizerSim}}
+\item{object}{An object of class \link[mizer:MizerSim]{mizer::MizerSim}.}
 
-\item{species}{Plot only a specific species and its phenotypes
-Default is NULL}
+\item{species}{Plot only a specific species and its phenotypes.
+Default is NULL.}
 
 \item{time_range}{The time range (either a vector of values, a vector of min
 and max time, or a single value) to average the abundances over. Default is
-the final time step.}
+the entire simulation time range.}
 
-\item{highlight}{...}
+\item{highlight}{Vector of species names to highlight.}
 }
 \value{
-A plot
+A ggplot object.
 }
 \description{
 After running a projection, plot the predation mortality rate of each species
-by size. The mortality rate is averaged over the specified time range (a
-single value for the time range can be used to plot a single time step).
+by size.
 }
 \examples{
 \donttest{
-params <- suppressMessages(newMultispeciesParams(NS_species_params_gears, inter))
-sim <- project(params, effort=1, t_max=20, t_save = 2, progress_bar = FALSE)
+params <- evoParams(no_sp = 5)
+sim <- evoProject(params, t_max = 20)
 plotPredMort(sim)
-plotPredMort(sim, time_range = 10:20)
 }
 }
 \seealso{
-\link{plotting_functions},  \code{\link[=getPredMort]{getPredMort()}}
+\link[mizer:plotting_functions]{mizer::plotting_functions}, \code{\link[mizer:getPredMort]{mizer::getPredMort()}}
 
-Other plotting functions: 
-\code{\link{plotDynamics}()},
-\code{\link{plotPredRate}()},
-\code{\link{plotSS}()},
-\code{\link{plotSpawn}()},
-\code{\link{plotStarvation}()},
-\code{\link{plotevoFeeding}()},
-\code{\link{plotevoGrowth}()},
-\code{\link{plotevoMortality}()},
-\code{\link{plotevoTrait}()}
+Other plotting functions:
+\code{\link[=plotDynamics]{plotDynamics()}},
+\code{\link[=plotPredRate]{plotPredRate()}},
+\code{\link[=plotSS]{plotSS()}},
+\code{\link[=plotSpawn]{plotSpawn()}},
+\code{\link[=plotStarvation]{plotStarvation()}},
+\code{\link[=plotevoFeeding]{plotevoFeeding()}},
+\code{\link[=plotevoGrowth]{plotevoGrowth()}},
+\code{\link[=plotevoMortality]{plotevoMortality()}},
+\code{\link[=plotevoTrait]{plotevoTrait()}}
 }
 \concept{plotting functions}

@@ -4,7 +4,7 @@ export(alien_synthesis)
 export(evoParams)
 export(evoProject)
 export(extinctionRDD)
-export(melt)
+export(nameGenerator)
 export(plotDynamics)
 export(plotPredMort)
 export(plotPredRate)
@@ -15,14 +15,22 @@ export(plotevoFeeding)
 export(plotevoGrowth)
 export(plotevoMortality)
 export(plotevoTrait)
+export(tempFun)
 import(dplyr)
 import(ggplot2)
 import(mizer)
 importFrom(grDevices,colorRampPalette)
-importFrom(methods,is)
+importFrom(lifecycle,
+  deprecate_warn,
+  deprecated,
+  is_present
+)
 importFrom(plyr,aaply)
 importFrom(reshape2,melt)
-importFrom(stats,pnorm)
-importFrom(stats,rnorm)
-importFrom(stats,runif)
-importFrom(stats,time)
+importFrom(stats,
+  pnorm,
+  rlnorm,
+  rnorm,
+  runif,
+  time
+)

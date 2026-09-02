@@ -1,34 +1,36 @@
 Package: mizerEvolution
 Title: Simulating Evolutionary Processes with Mizer
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person(given = "Romain",
            family = "Forestier",
            role = c("aut", "cre"),
            email = "romain.forestier@utas.edu.au",
            comment = c(ORCID = "0000-0002-6571-9222"))
-Description: With MizerEvolution you can simulate trait 
-    evolution and species invasion in the Mizer environment.
+Description: With mizerEvolution you can simulate trait 
+    evolution and species invasion in the mizer environment.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
 Depends:
     R (>= 3.5),
-    mizer (>= 2.0.1)
+    mizer (>= 3.4.0)
 Imports:
     ggplot2,
     dplyr,
-    methods,
     reshape2,
     grDevices,
     stats,
-    plyr
+    plyr,
+    lifecycle
 Collate:
-    evoParams.R
-    help.R
-    mizerEvolution-package.R
-    plots.R
+    'mizerEvolution-package.R'
+    'evoParams.R'
+    'plots.R'
 Suggests: 
-    testthat
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0
+URL: https://sizespectrum.org/mizerEvolution, https://github.com/sizespectrum/mizerEvolution
+BugReports: https://github.com/sizespectrum/mizerEvolution/issues

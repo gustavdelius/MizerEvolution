@@ -1,5 +1,8 @@
+^mizerEvolution\.Rproj$
 ^mizerEvo\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^romainZone\.R$
 ^romainZone/BiomassPred\.rds$
+^_pkgdown\.yml$
+^docs$
